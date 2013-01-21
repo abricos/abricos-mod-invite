@@ -1,6 +1,5 @@
 <?php 
 /**
- * @version $Id: module.php 982 2012-10-09 15:32:19Z roosit $
  * @package Abricos
  * @subpackage Invite
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL, see LICENSE.php
