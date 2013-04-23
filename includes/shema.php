@@ -23,7 +23,8 @@ if ($updateManager->isInstall()){
 			`pubkey` varchar(32) NOT NULL DEFAULT '' COMMENT 'Идентификатор пригласительного',
 			
 			`dateline` int(10) unsigned NOT NULL DEFAULT 0 COMMENT 'Дата создания',
-	
+			`dateuse` int(10) unsigned NOT NULL DEFAULT 0 COMMENT 'Дата использования',
+			
 			UNIQUE KEY  (`userid`),
 			KEY (`authorid`)
 		)".$charset

@@ -25,6 +25,16 @@ class InviteQuery {
 		return $db->query_first($sql);
 	}
 	
+	public static function InviteUse(Ab_Database $db, $userid, $invite){
+		$sql = "
+			UPDATE ".$db->prefix."invite
+			SET dateuse=".TIMENOW."
+			WHERE userid=".bkint($userid)." AND pubkey='".bkstr($invite)."'
+			LIMIT 1
+		";
+		$db->query_write($sql);
+	}
+	
 	public static function AuthorByInvite(Ab_Database $db, $invite){
 		$sql = "
 			SELECT
@@ -75,12 +85,19 @@ class InviteQuery {
 		$db->query_write($sql);
 	}
 	
-	public static function InviteRemove(Ab_Database $db, $invite){
+	/**
+	 * Удалить старые и не используемые инвайты
+	 * 
+	 * @param Ab_Database $db
+	 * @param unknown_type $invite
+	 */
+	public static function InviteClean(Ab_Database $db){
 		$sql = "
 			UPDATE ".$db->prefix."invite
 			SET pubkey=''
-			WHERE pubkey='".$invite."'
-			LIMIT 1
+			WHERE 
+				(dateuse=0 AND dateline<".(TIMENOW-60*60*24*14).") OR
+				(dateuse>0 AND dateuse<".(TIMENOW-60*60*24).")
 		";
 		$db->query_write($sql);
 	}

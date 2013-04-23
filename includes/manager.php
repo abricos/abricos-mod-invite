@@ -81,22 +81,22 @@ class InviteManager extends Ab_ModuleManager {
 	
 	public function AuthByInvite($userid, $invite){
 		if (!$this->IsViewRole()){ return false; }
+
+		InviteQuery::InviteClean($this->db);
 		
-		$ui = InviteQuery::UserByInvite($this->db, $invite);
-		if (empty($ui) || $ui['id'] != $userid){
+		$row = InviteQuery::UserByInvite($this->db, $invite);
+		if (empty($row) || $row['id'] != $userid){
 			sleep(5);
 			return false;
 		}
+		
+		InviteQuery::InviteUse($this->db, $userid, $invite);
+		
 		$userMan = Abricos::$user->GetManager();
 		
-		$user = UserQuery::User($this->db, $ui['id']);
+		$user = UserQuery::User($this->db, $row['id']);
 
 		$userMan->LoginMethod($user);
-		
-		// инвайт выполнил свою роль
-		$this->InviteRemove($invite);
-		
-		// TODO: необходимо удалить все инвайты, которые игнорировал пользователь. Т.е. он авторизовался по логину напрямую, а инвайт остался в системе
 		
 		return true;
 	}
@@ -252,11 +252,6 @@ class InviteManager extends Ab_ModuleManager {
 		}
 		return $pass;
 	}
-	
-	public function InviteRemove($invite){
-		InviteQuery::InviteRemove($this->db, $invite);
-	}
-
 }
 
 ?>
