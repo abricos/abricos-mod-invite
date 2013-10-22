@@ -43,6 +43,9 @@ class InviteModule extends Ab_Module {
 		return $this->_manager;
 	}
 	
+	public function GetContentName(){
+		return 'auth';
+	}
 }
 
 class InviteData {

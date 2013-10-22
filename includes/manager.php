@@ -232,6 +232,9 @@ class InviteManager extends Ab_ModuleManager {
 		$ret->user['password'] = $password;
 		$ret->user['pubkey'] = $pubkey;
 		
+		
+		$ret->URL = Abricos::$adress->host."/invite/".$pubkey."/".$userid."/".$modname."/?redirect=";
+		
 		if (!$isVirtual){
 			// добавить инвайт в базу
 			InviteQuery::InviteAppend($this->db, $modname, $userid, $this->userid, $pubkey);
