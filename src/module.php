@@ -22,7 +22,7 @@ class InviteModule extends Ab_Module {
 	public $currentInvite = null;
 	
 	public function __construct(){
-		$this->version = "0.1";
+		$this->version = "0.1.0";
 		$this->name = "invite";
 		$this->takelink = "invite";
 		$this->permission = new InvitePermission($this);
