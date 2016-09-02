@@ -12,6 +12,16 @@
  */
 class InviteQuery {
 
+    public static function UserByEmail(Ab_Database $db, $email){
+        $sql = "
+			SELECT *
+			FROM ".$db->prefix."user
+			WHERE email='".bkstr($email)."'
+			LIMIT 1
+		";
+        return $db->query_first($sql);
+    }
+
     public static function UserByInvite(Ab_Database $db, $invite){
         $sql = "
 			SELECT 

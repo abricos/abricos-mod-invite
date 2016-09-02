@@ -1,0 +1,29 @@
+{
+  "version": "0.1.0",
+  "type": "model",
+  "fields": {
+    "id": {
+      "type": "int",
+      "dbField": "inviteid"
+    },
+    "authorid": {
+      "type": "int"
+    },
+    "module": {
+      "type": "string",
+      "dbField": "ownerModule"
+    },
+    "pubkey": {
+      "type": "int",
+      "dbField": "ownerModule"
+    },
+    "date": {
+      "type": "date",
+      "dbField": "dateline"
+    },
+    "use": {
+      "type": "date",
+      "dbField": "dateuse"
+    }
+  }
+}
