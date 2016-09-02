@@ -2,19 +2,20 @@
 /**
  * @package Abricos
  * @subpackage Invite
- * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL, see LICENSE.php
- * @author  Alexander Kuzmin <roosit@abricos.org>
+ * @copyright 2013-2016 Alexander Kuzmin
+ * @license http://opensource.org/licenses/mit-license.php MIT License
+ * @author Alexander Kuzmin <roosit@abricos.org>
  */
 
 $charset = "CHARACTER SET 'utf8' COLLATE 'utf8_general_ci'";
-$updateManager = Ab_UpdateManager::$current; 
+$updateManager = Ab_UpdateManager::$current;
 $db = Abricos::$db;
 $pfx = $db->prefix;
 
 if ($updateManager->isInstall()){
-	Abricos::GetModule('invite')->permission->Install();
-	
-	$db->query_write("
+    Abricos::GetModule('invite')->permission->Install();
+
+    $db->query_write("
 		CREATE TABLE IF NOT EXISTS ".$pfx."invite (
 			`userid` int(10) unsigned NOT NULL DEFAULT 0 COMMENT 'Пригласили пользователя',
 			`authorid` int(10) unsigned NOT NULL DEFAULT 0 COMMENT 'Автор пригласительного',
@@ -28,8 +29,5 @@ if ($updateManager->isInstall()){
 			UNIQUE KEY  (`userid`),
 			KEY (`authorid`)
 		)".$charset
-	);
-	
+    );
 }
-
-?>
