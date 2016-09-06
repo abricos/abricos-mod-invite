@@ -16,18 +16,19 @@ class InviteApp extends AbricosApplication {
 
     protected function GetClasses(){
         return array(
+            'Owner' => 'InviteOwner',
             'Invite' => 'Invite',
         );
     }
 
     protected function GetStructures(){
-        return 'Invite';
+        return 'Owner,Invite';
     }
 
     public function ResponseToJSON($d){
         switch ($d->do){
-            case 'userByEmail':
-                return $this->UserByEmailToJSON($d->email);
+            case 'userSearch':
+                return $this->UserSearchToJSON($d->data);
         }
         return null;
     }
@@ -40,42 +41,88 @@ class InviteApp extends AbricosApplication {
         return $this->manager->IsWriteRole();
     }
 
-    public function UserByEmailToJSON($email){
-        $res = $this->UserByEmail($email);
-        return $this->ResultToJSON('userByEmail', $res);
+    private function OwnerAppFunctionExist($module, $fn){
+        $ownerApp = Abricos::GetApp($module);
+        if (empty($ownerApp)){
+            return false;
+        }
+        if (!method_exists($ownerApp, $fn)){
+            return false;
+        }
+        return true;
     }
 
-    public function UserByEmail($email){
+    public function IsInvite(InviteOwner $owner){
+        if (!$this->IsWriteRole()){
+            return AbricosResponse::ERR_FORBIDDEN;
+        }
+
+        $ownerApp = Abricos::GetApp($owner->module);
+        if (empty($ownerApp)){
+            return AbricosResponse::ERR_BAD_REQUEST;
+        }
+
+        if (!$this->OwnerAppFunctionExist($owner->module, 'Invite_IsInvite')){
+            return AbricosResponse::ERR_BAD_REQUEST;
+        }
+
+        return $ownerApp->Invite_IsInvite($owner->type, $owner->ownerid);
+    }
+
+    public function UserSearchToJSON($d){
+        $res = $this->UserSearch($d);
+        return $this->ResultToJSON('userSearch', $res);
+    }
+
+    public function UserSearch($d){
         if (!$this->IsWriteRole()){
             sleep(5);
             return AbricosResponse::ERR_FORBIDDEN;
         }
 
+        /** @var InviteOwner $owner */
+        $owner = $this->InstanceClass('Owner', $d->owner);
+
+        if (!$this->IsInvite($owner)){
+            return AbricosResponse::ERR_FORBIDDEN;
+        }
+
+        $utmf = Abricos::TextParser(true);
+        $loginOrEmail = $utmf->Parser($d->loginOrEmail);
+
+        if (empty($loginOrEmail)){
+            return AbricosResponse::ERR_BAD_REQUEST;
+        }
+
         $ret = new stdClass();
-        $ret->email = $email;
         $ret->userid = 0;
 
-        if (!UserManager::EmailValidate($email)){
-            $ret->isNotValid = true;
-            return $ret;
+        if (UserManager::EmailValidate($loginOrEmail)){
+            $ret->email = $loginOrEmail;
+
+            $row = InviteQuery::UserByEmail($this->db, $loginOrEmail);
+            if (!empty($row)){
+                $ret->userid = intval($row['userid']);
+            }
+        } else {
+            $ret->login = $loginOrEmail;
+            $row = InviteQuery::UserByLogin($this->db, $loginOrEmail);
+            if (!empty($row)){
+                $ret->userid = intval($row['userid']);
+            }
         }
 
-        $d = InviteQuery::UserByEmail($this->db, $email);
-        if (!empty($d)){
-            $ret->userid = intval($d['userid']);
-        }
+        if ($ret->userid > 0){
+            /** @var UProfileManager $uprofileManager */
+            $uprofileManager = Abricos::GetModuleManager('uprofile');
 
-        /** @var UProfileManager $uprofileManager */
-        $uprofileManager = Abricos::GetModuleManager('uprofile');
-
-        if (!$uprofileManager->UserPublicityCheck($ret->userid)){
-            $ret->isNotInvite = true;
+            if (!$uprofileManager->UserPublicityCheck($ret->userid)){
+                $ret->isNotInvite = true;
+            }
         }
 
         return $ret;
     }
-
-
 
 
     public function UserByInvite($invite){
@@ -170,7 +217,7 @@ class InviteApp extends AbricosApplication {
                 $ret->error = 1; // емайл указан не верно
                 return $ret;
             }
-            $uinfo = InviteQuery::UserByEmailInfo($this->db, $email);
+            $uinfo = InviteQuery::UserSearchInfo($this->db, $email);
             if (!empty($uinfo)){
                 $ret->error = 3; // уже есть пользователь с таким емайл
                 return $ret;

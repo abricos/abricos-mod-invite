@@ -17,8 +17,10 @@ Component.entryPoint = function(NS){
 
     SYS.Application.build(COMPONENT, {}, {
         initializer: function(){
-            NS.roles.load(function(){
-                this.initCallbackFire();
+            this.appStructure(function(){
+                NS.roles.load(function(){
+                    this.initCallbackFire();
+                }, this);
             }, this);
         },
     }, [], {
@@ -27,12 +29,28 @@ Component.entryPoint = function(NS){
         },
         ATTRS: {
             isLoadAppStructure: {value: false},
+            ownerList: {
+                readOnly: true,
+                getter: function(){
+                    if (!this._ownerListAttr){
+                        this._ownerListAttr = new NS.OwnerList({appInstance: this});
+                    }
+                    return this._ownerListAttr;
+                }
+            },
+            Owner: {value: NS.Owner},
             Invite: {value: NS.Invite},
         },
         REQS: {
-            userByEmail: {
-                args: ['email'],
+            stat: {
+                attrs: ['owner'],
+                type: 'model:Stat'
+            },
+            userSearch: {
+                args: ['data'],
                 onResponse: function(d){
+                    console.log(arguments);
+                    return;
                     d.userid = d.userid | 0;
                     if (d.userid === 0){
                         return;

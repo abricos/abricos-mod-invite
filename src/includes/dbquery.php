@@ -22,6 +22,17 @@ class InviteQuery {
         return $db->query_first($sql);
     }
 
+    public static function UserByLogin(Ab_Database $db, $login){
+        $sql = "
+			SELECT *
+			FROM ".$db->prefix."user
+			WHERE username='".bkstr($login)."'
+			LIMIT 1
+		";
+        return $db->query_first($sql);
+    }
+
+
     public static function UserByInvite(Ab_Database $db, $invite){
         $sql = "
 			SELECT 

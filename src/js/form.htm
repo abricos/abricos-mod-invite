@@ -1,0 +1,32 @@
+<!--{inviteForm}-->
+<div class="row">
+    <div class="col-sm-6">
+        <div class="input-group">
+            <input id="{i#loginOrEmail}" type="text"
+                   data-wait="disable"
+                   class="input-sm form-control"
+                   placeholder="Имя пользователя или e-mail"/>
+
+            <div class="input-group-btn">
+                <button data-click="search" class="btn btn-default btn-sm"
+                        type="button"
+                        data-wait="disable">
+                    Найти
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6">
+        <div id="{i#findEmailNotValid}" class="text-danger hide">
+            Ошибка в e-mail
+        </div>
+        <div id="{i#findNotInvite}" class="text-danger hide">
+            Вы не можете добавить этого пользователя
+        </div>
+
+        <div id="{i#findUserNotFound}" class="hide text-success">
+            Пользователь с таким e-mail не зарегистрирован
+        </div>
+    </div>
+
+</div>

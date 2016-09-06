@@ -20,3 +20,15 @@ class Invite extends AbricosModel {
     protected $_structModule = 'company';
     protected $_structName = 'Invite';
 }
+
+/**
+ * Class InviteOwner
+ *
+ * @property string $module
+ * @property string $type
+ * @property int $ownerid
+ */
+class InviteOwner extends AbricosModel {
+    protected $_structModule = 'invite';
+    protected $_structName = 'Owner';
+}
