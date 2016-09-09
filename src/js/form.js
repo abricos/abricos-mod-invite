@@ -16,7 +16,6 @@ Component.entryPoint = function(NS){
             this.publish('response');
         },
         onInitAppWidget: function(err, appInstance){
-
         },
         search: function(){
             var tp = this.template,
@@ -32,24 +31,21 @@ Component.entryPoint = function(NS){
             this.get('appInstance').userSearch(data, function(err, result){
                 this.set('waiting', false);
 
-                if (err){
+                var rUS = result && result.userSearch ? result.userSearch : null;
+
+                if (err || !rUS.isSetCode('OK')){
                     return;
                 }
 
-                var sr = result.userSearch;
-                if (sr.isNotValid){
-                    return tp.show('findEmailNotValid');
+                if (rUS.isSetCode('EXISTS')){
+                    if (rUS.isSetCode('ADD_DENIED')){
+                        return tp.show('addDenied');
+                    }
+                } else if (rUS.isSetCode('NOT_EXISTS')){
+                    if (rUS.isSetCode('EMAIL_VALID')){
+                        tp.show('findUserNotFound');
+                    }
                 }
-
-                if (sr.isNotInvite){
-                    return tp.show('findNotInvite');
-                }
-
-                if (sr.userid === 0){
-                    tp.setHTML('email', email);
-                    tp.show('findUserNotFound');
-                }
-
             }, this);
         },
         toJSON: function(){

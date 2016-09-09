@@ -18,11 +18,12 @@ class InviteApp extends AbricosApplication {
         return array(
             'Owner' => 'InviteOwner',
             'Invite' => 'Invite',
+            'UserSearch' => 'InviteUserSearch',
         );
     }
 
     protected function GetStructures(){
-        return 'Owner,Invite';
+        return 'Owner,Invite,UserSearch';
     }
 
     public function ResponseToJSON($d){
@@ -75,35 +76,36 @@ class InviteApp extends AbricosApplication {
     }
 
     public function UserSearch($d){
+        /** @var InviteUserSearch $ret */
+        $ret = $this->InstanceClass('UserSearch', $d);
+
         if (!$this->IsWriteRole()){
-            sleep(5);
-            return AbricosResponse::ERR_FORBIDDEN;
+            return $ret->SetError(AbricosResponse::ERR_FORBIDDEN);
         }
 
         /** @var InviteOwner $owner */
         $owner = $this->InstanceClass('Owner', $d->owner);
 
         if (!$this->IsInvite($owner)){
-            return AbricosResponse::ERR_FORBIDDEN;
+            return $ret->SetError(AbricosResponse::ERR_FORBIDDEN);
         }
 
-        $utmf = Abricos::TextParser(true);
-        $loginOrEmail = $utmf->Parser($d->loginOrEmail);
+        $loginOrEmail = $ret->vars->loginOrEmail;
 
         if (empty($loginOrEmail)){
-            return AbricosResponse::ERR_BAD_REQUEST;
+            return $ret->SetError(AbricosResponse::ERR_BAD_REQUEST, $ret->codes->INPUT_IS_EMPTY);
         }
 
-        $ret = new stdClass();
+        $ret->SetCode($ret->codes->OK);
         $ret->userid = 0;
 
         if (UserManager::EmailValidate($loginOrEmail)){
+            $ret->AddCode($ret->codes->EMAIL_VALID);
+
             $ret->email = $loginOrEmail;
 
             $row = InviteQuery::UserByEmail($this->db, $loginOrEmail);
-            if (!empty($row)){
-                $ret->userid = intval($row['userid']);
-            }
+            $ret->userid = !empty($row) ? intval($row['userid']) : 0;
         } else {
             $ret->login = $loginOrEmail;
             $row = InviteQuery::UserByLogin($this->db, $loginOrEmail);
@@ -112,18 +114,21 @@ class InviteApp extends AbricosApplication {
             }
         }
 
+        $ret->AddCode($ret->userid > 0 ? $ret->codes->EXISTS : $ret->codes->NOT_EXISTS);
+
         if ($ret->userid > 0){
             /** @var UProfileManager $uprofileManager */
             $uprofileManager = Abricos::GetModuleManager('uprofile');
 
             if (!$uprofileManager->UserPublicityCheck($ret->userid)){
-                $ret->isNotInvite = true;
+                $ret->AddCode($ret->codes->ADD_DENIED);
+            }else{
+                $ret->AddCode($ret->codes->ADD_ALLOWED);
             }
         }
 
         return $ret;
     }
-
 
     public function UserByInvite($invite){
         if (!$this->IsViewRole()){

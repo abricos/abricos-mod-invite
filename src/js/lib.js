@@ -6,14 +6,13 @@ Component.requires = {
     ]
 };
 Component.entryPoint = function(NS){
+    var COMPONENT = this,
+        SYS = Brick.mod.sys;
 
     NS.roles = new Brick.AppRoles('{C#MODNAME}', {
         isAdmin: 50,
         isWrite: 30,
     });
-
-    var COMPONENT = this,
-        SYS = Brick.mod.sys;
 
     SYS.Application.build(COMPONENT, {}, {
         initializer: function(){
@@ -40,6 +39,7 @@ Component.entryPoint = function(NS){
             },
             Owner: {value: NS.Owner},
             Invite: {value: NS.Invite},
+            UserSearch: {value: NS.UserSearch},
         },
         REQS: {
             stat: {
@@ -48,15 +48,14 @@ Component.entryPoint = function(NS){
             },
             userSearch: {
                 args: ['data'],
-                onResponse: function(d){
-                    console.log(arguments);
-                    return;
-                    d.userid = d.userid | 0;
-                    if (d.userid === 0){
+                type: 'response:UserSearch',
+                onResponse: function(userSearch){
+                    var userid = userSearch.get('userid');
+                    if (userid === 0){
                         return;
                     }
 
-                    var userIds = [d.userid];
+                    var userIds = [userid];
 
                     return function(callback, context){
                         this.getApp('uprofile').userListByIds(userIds, function(err, result){

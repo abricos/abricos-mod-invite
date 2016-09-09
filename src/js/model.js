@@ -95,4 +95,9 @@ Component.entryPoint = function(NS){
     NS.Invite = Y.Base.create('invite', SYS.AppModel, [], {
         structureName: 'Invite'
     });
+
+    NS.UserSearch = Y.Base.create('userSearch', SYS.AppResponse, [], {
+        structureName: 'UserSearch'
+    });
+
 };

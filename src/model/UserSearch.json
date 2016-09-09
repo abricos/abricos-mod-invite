@@ -1,0 +1,41 @@
+{
+  "type": "response",
+  "version": "0.1.0",
+  "vars": {
+    "loginOrEmail": {
+      "type": "string",
+      "parse": "full"
+    }
+  },
+  "codes": {
+    "OK": 1,
+    "INPUT_IS_EMPTY": {
+      "code": 2,
+      "msg": "Search query is empty"
+    },
+    "EMAIL_VALID": 4,
+    "NOT_EXISTS": {
+      "code": 8,
+      "msg": "User is not found"
+    },
+    "EXISTS": {
+      "code": 16,
+      "msg": "The user exists"
+    },
+    "ADD_ALLOWED": {
+      "code": 32
+    },
+    "ADD_DENIED": 64
+  },
+  "fields": {
+    "userid": {
+      "type": "int"
+    },
+    "login": {
+      "type": "string"
+    },
+    "email": {
+      "type": "string"
+    }
+  }
+}
