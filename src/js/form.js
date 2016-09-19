@@ -16,36 +16,33 @@ Component.entryPoint = function(NS){
             this.publish('response');
         },
         onInitAppWidget: function(err, appInstance){
+            this.triggerHide('inviteForm');
         },
         search: function(){
-            var tp = this.template,
-                data = this.toJSON();
+            var data = this.toJSON();
 
             this.fire('request', {
                 data: data
             });
 
-            tp.hide('findEmailNotValid,findNotInvite,findUserNotFound');
-
+            this.triggerHide('inviteForm');
+            
             this.set('waiting', true);
             this.get('appInstance').userSearch(data, function(err, result){
                 this.set('waiting', false);
 
-                var rUS = result && result.userSearch ? result.userSearch : null;
+                var rUS = result && result.userSearch ? result.userSearch : null,
+                    eData = {
+                        error: err,
+                        result: rUS
+                    };
 
                 if (err || !rUS.isSetCode('OK')){
-                    return;
+                } else {
+                    var codes = rUS.getCodesIsSet();
+                    this.triggerShow('inviteForm', codes);
                 }
-
-                if (rUS.isSetCode('EXISTS')){
-                    if (rUS.isSetCode('ADD_DENIED')){
-                        return tp.show('addDenied');
-                    }
-                } else if (rUS.isSetCode('NOT_EXISTS')){
-                    if (rUS.isSetCode('EMAIL_VALID')){
-                        tp.show('findUserNotFound');
-                    }
-                }
+                this.fire('response', eData);
             }, this);
         },
         toJSON: function(){
@@ -55,15 +52,12 @@ Component.entryPoint = function(NS){
                 owner: this.get('owner').toJSON(),
                 loginOrEmail: tp.getValue('loginOrEmail')
             };
-
         },
     }, {
         ATTRS: {
             component: {value: COMPONENT},
             templateBlockName: {value: 'inviteForm'},
             owner: NS.ATTRIBUTE.owner,
-            callbackContext: {value: null},
-            onLoadCallback: {value: null}
         },
         CLICKS: {
             search: 'search',

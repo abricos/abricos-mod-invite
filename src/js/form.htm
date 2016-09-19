@@ -17,13 +17,14 @@
         </div>
     </div>
     <div class="col-sm-6">
-        <div id="{i#addDenied}" class="text-danger hide">
+        <div class="text-danger" data-trigger="inviteForm" data-code="ADD_DENIED">
             Вы не можете добавить этого пользователя
         </div>
 
-        <div id="{i#findUserNotFound}" class="text-success hide">
-            Пользователь с таким e-mail не зарегистрирован
+        <div data-trigger="inviteForm" data-code="NOT_EXISTS">
+            <div class="text-success" data-trigger="inviteForm" data-code="EMAIL_VALID">
+                Пользователь с таким e-mail не зарегистрирован
+            </div>
         </div>
     </div>
-
 </div>

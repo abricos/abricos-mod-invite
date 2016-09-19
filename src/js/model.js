@@ -30,7 +30,7 @@ Component.entryPoint = function(NS){
                 }
                 return val;
             }
-        }
+        },
     };
 
     NS.Owner = Y.Base.create('owner', SYS.AppModel, [], {
