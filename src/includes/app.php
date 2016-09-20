@@ -92,39 +92,51 @@ class InviteApp extends AbricosApplication {
 
         $loginOrEmail = $ret->vars->loginOrEmail;
 
+        $codes = $ret->codes;
+
         if (empty($loginOrEmail)){
-            return $ret->SetError(AbricosResponse::ERR_BAD_REQUEST, $ret->codes->INPUT_IS_EMPTY);
+            return $ret->SetError(AbricosResponse::ERR_BAD_REQUEST, $codes->INPUT_IS_EMPTY);
         }
 
-        $ret->SetCode($ret->codes->OK);
+        $ret->SetCode($codes->OK);
         $ret->userid = 0;
 
         if (UserManager::EmailValidate($loginOrEmail)){
-            $ret->AddCode($ret->codes->EMAIL_VALID);
+            $ret->AddCode($codes->EMAIL_VALID);
 
             $ret->email = $loginOrEmail;
 
             $row = InviteQuery::UserByEmail($this->db, $loginOrEmail);
-            $ret->userid = !empty($row) ? intval($row['userid']) : 0;
+
+            if (!empty($row)){
+                $ret->userid = intval($row['userid']);
+            } else {
+                $ret->AddCode($codes->INVITE_ALLOWED);
+            }
         } else {
+            $ret->AddCode($codes->LOGIN_VALID);
+
             $ret->login = $loginOrEmail;
+
             $row = InviteQuery::UserByLogin($this->db, $loginOrEmail);
             if (!empty($row)){
                 $ret->userid = intval($row['userid']);
             }
         }
 
-        $ret->AddCode($ret->userid > 0 ? $ret->codes->EXISTS : $ret->codes->NOT_EXISTS);
-
         if ($ret->userid > 0){
+            $ret->AddCode($codes->EXISTS);
+
             /** @var UProfileManager $uprofileManager */
             $uprofileManager = Abricos::GetModuleManager('uprofile');
 
             if (!$uprofileManager->UserPublicityCheck($ret->userid)){
-                $ret->AddCode($ret->codes->ADD_DENIED);
-            }else{
-                $ret->AddCode($ret->codes->ADD_ALLOWED);
+                $ret->AddCode($codes->ADD_DENIED);
+            } else {
+                $ret->AddCode($codes->ADD_ALLOWED);
             }
+        } else {
+            $ret->AddCode($codes->NOT_EXISTS);
         }
 
         return $ret;

@@ -14,18 +14,19 @@
       "msg": "Search query is empty"
     },
     "EMAIL_VALID": 4,
-    "NOT_EXISTS": {
-      "code": 8,
-      "msg": "User is not found"
-    },
+    "LOGIN_VALID": 8,
     "EXISTS": {
       "code": 16,
       "msg": "The user exists"
     },
-    "ADD_ALLOWED": {
-      "code": 32
+    "ADD_ALLOWED": 32,
+    "ADD_DENIED": 64,
+    "NOT_EXISTS": {
+      "code": 128,
+      "msg": "User is not found"
     },
-    "ADD_DENIED": 64
+    "INVITE_ALLOWED": 256,
+    "INVITE_DENIED": 512
   },
   "fields": {
     "userid": {

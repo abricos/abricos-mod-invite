@@ -31,6 +31,15 @@ Component.entryPoint = function(NS){
                 return val;
             }
         },
+        user: {
+            readOnly: true,
+            getter: function(){
+                var userid = this.get('userid'),
+                    userList = this.appInstance.getApp('uprofile').get('userList');
+
+                return userList.getById(userid);
+            }
+        }
     };
 
     NS.Owner = Y.Base.create('owner', SYS.AppModel, [], {
@@ -98,6 +107,9 @@ Component.entryPoint = function(NS){
 
     NS.UserSearch = Y.Base.create('userSearch', SYS.AppResponse, [], {
         structureName: 'UserSearch'
+    }, {
+        ATTRS: {
+            user: NS.ATTRIBUTE.user
+        }
     });
-
 };

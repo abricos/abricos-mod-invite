@@ -26,7 +26,7 @@ Component.entryPoint = function(NS){
             });
 
             this.triggerHide('inviteForm');
-            
+
             this.set('waiting', true);
             this.get('appInstance').userSearch(data, function(err, result){
                 this.set('waiting', false);

@@ -17,13 +17,20 @@
         </div>
     </div>
     <div class="col-sm-6">
-        <div class="text-danger" data-trigger="inviteForm" data-code="ADD_DENIED">
-            Вы не можете добавить этого пользователя
+        <div class="text-danger" data-trigger="inviteForm" data-code="INPUT_IS_EMPTY">
+            Необходимо указать имя пользователя или e-mail
         </div>
-
         <div data-trigger="inviteForm" data-code="NOT_EXISTS">
+            <div class="text-success" data-trigger="inviteForm" data-code="LOGIN_VALID">
+                Пользователь не найден
+            </div>
             <div class="text-success" data-trigger="inviteForm" data-code="EMAIL_VALID">
                 Пользователь с таким e-mail не зарегистрирован
+            </div>
+        </div>
+        <div data-trigger="inviteForm" data-code="EXISTS">
+            <div class="text-danger" data-trigger="inviteForm" data-code="ADD_DENIED">
+                Вы не можете добавить этого пользователя
             </div>
         </div>
     </div>

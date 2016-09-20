@@ -21,10 +21,13 @@ interface InviteUserSearchVars {
  * @property int $OK
  * @property int $INPUT_IS_EMPTY
  * @property int $EMAIL_VALID
- * @property int $NOT_EXISTS
+ * @property int $LOGIN_VALID
  * @property int $EXISTS
  * @property int $ADD_ALLOWED
  * @property int $ADD_DENIED
+ * @property int $NOT_EXISTS
+ * @property int $INVITE_ALLOWED
+ * @property int $INVITE_DENIED
  */
 interface InviteUserSearchCodes {
 }
