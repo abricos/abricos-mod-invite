@@ -1,0 +1,35 @@
+{
+  "type": "response",
+  "version": "0.1.0",
+  "vars": {
+    "firstName": {
+      "type": "string",
+      "parse": "full"
+    },
+    "lastName": {
+      "type": "string",
+      "parse": "full"
+    }
+  },
+  "codes": {
+    "OK": 1
+  },
+  "fields": {
+    "userid": {
+      "type": "int"
+    },
+    "email": {
+      "type": "string"
+    },
+    "firstName": {
+      "type": "string"
+    },
+    "lastName": {
+      "type": "string"
+    },
+    "pubkey": {
+      "type": "string",
+      "rolefn": "IsAdminRole"
+    }
+  }
+}

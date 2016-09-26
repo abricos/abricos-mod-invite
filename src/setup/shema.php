@@ -17,16 +17,22 @@ if ($updateManager->isInstall()){
 
     $db->query_write("
 		CREATE TABLE IF NOT EXISTS ".$pfx."invite (
-			userid int(10) unsigned NOT NULL DEFAULT 0 COMMENT 'Пригласили пользователя',
-			authorid int(10) unsigned NOT NULL DEFAULT 0 COMMENT 'Автор пригласительного',
+            inviteid int(10) UNSIGNED NOT NULL auto_increment,
+            
+			userid int(10) unsigned NOT NULL DEFAULT 0 COMMENT 'Приглашенный',
+			authorid int(10) unsigned NOT NULL DEFAULT 0 COMMENT 'Отправитель',
 			
-			ownerModule varchar(50) NOT NULL DEFAULT '' COMMENT 'Модуль инициатор',
+            ownerModule VARCHAR(50) NOT NULL COMMENT 'Owner Module Name',
+            ownerType VARCHAR(16) NOT NULL DEFAULT '' COMMENT 'Owner Type',
+            ownerid int(10) UNSIGNED NOT NULL COMMENT 'Owner ID',
+			
 			pubkey varchar(32) NOT NULL DEFAULT '' COMMENT 'Идентификатор пригласительного',
 			
 			dateline int(10) unsigned NOT NULL DEFAULT 0 COMMENT 'Дата создания',
 			dateuse int(10) unsigned NOT NULL DEFAULT 0 COMMENT 'Дата использования',
+			deldate int(10) unsigned NOT NULL DEFAULT 0 COMMENT 'Дата удаления',
 			
-			UNIQUE KEY  (userid),
+            PRIMARY KEY (inviteid),
 			KEY (authorid)
 		)".$charset
     );

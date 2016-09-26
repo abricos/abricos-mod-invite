@@ -16,7 +16,7 @@ class InviteQuery {
         $sql = "
 			SELECT *
 			FROM ".$db->prefix."user
-			WHERE email='".bkstr($email)."'
+			WHERE UPPER(email)=UPPER('".bkstr($email)."')
 			LIMIT 1
 		";
         return $db->query_first($sql);
@@ -26,12 +26,52 @@ class InviteQuery {
         $sql = "
 			SELECT *
 			FROM ".$db->prefix."user
-			WHERE username='".bkstr($login)."'
+			WHERE UPPER(username)=UPPER('".bkstr($login)."')
 			LIMIT 1
 		";
         return $db->query_first($sql);
     }
 
+    public static function UserCount(Ab_Database $db){
+        $sql = "
+			SELECT count(*) as cnt
+			FROM ".$db->prefix."user
+			LIMIT 1
+		";
+        $row = $db->query_first($sql);
+        return $row['cnt'];
+    }
+
+    public static function InviteAppend(Ab_Database $db, InviteUserSearch $rUS, InviteCreate $rCreate){
+        $sql = "
+			INSERT INTO ".$db->prefix."invite 
+			(userid, authorid, ownerModule, ownerType, ownerid, pubkey, dateline) VALUES (
+				".bkint($rCreate->userid).",
+				".bkint(Abricos::$user->id).",
+				'".bkstr($rUS->vars->owner->module)."',
+				'".bkstr($rUS->vars->owner->type)."',
+				".bkint($rUS->vars->owner->ownerid).",
+				'".bkstr($rCreate->pubkey)."',
+				".TIMENOW."
+			)
+		";
+        $db->query_write($sql);
+        return $db->insert_id();
+    }
+
+    public static function UserSetFullName(Ab_Database $db, InviteCreate $rCreate){
+        $sql = "
+			UPDATE ".$db->prefix."user
+			SET
+				firstname='".bkstr($rCreate->firstName)."',
+				lastname='".bkstr($rCreate->lastName)."'
+			WHERE userid=".bkint($rCreate->userid)."
+			LIMIT 1
+		";
+        $db->query_write($sql);
+    }
+
+    /* * * * * * * * * * * OLD FUNCTIONS * * * * * * * * * */
 
     public static function UserByInvite(Ab_Database $db, $invite){
         $sql = "
@@ -77,39 +117,6 @@ class InviteQuery {
     }
 
 
-    public static function UserByEmailInfo(Ab_Database $db, $email){
-        $sql = "
-			SELECT *
-			FROM ".$db->prefix."user
-			WHERE email='".bkstr($email)."'
-			LIMIT 1
-		";
-        return $db->query_first($sql);
-    }
-
-    public static function UserCount(Ab_Database $db){
-        $sql = "
-			SELECT count(*) as cnt
-			FROM ".$db->prefix."user
-			LIMIT 1
-		";
-        $row = $db->query_first($sql);
-        return $row['cnt'];
-    }
-
-    public static function InviteAppend(Ab_Database $db, $modname, $userid, $authorid, $pubkey){
-        $sql = "
-			INSERT INTO ".$db->prefix."invite (userid, authorid, module, pubkey, dateline) VALUES (
-				".bkint($userid).",
-				".bkint($authorid).",
-				'".bkstr($modname)."',
-				'".bkstr($pubkey)."',
-				".TIMENOW."
-			)
-		";
-        $db->query_write($sql);
-    }
-
     /**
      * Удалить старые и не используемые инвайты
      *
@@ -127,15 +134,4 @@ class InviteQuery {
         $db->query_write($sql);
     }
 
-    public static function UserSetFLName(Ab_Database $db, $userid, $fname, $lname){
-        $sql = "
-			UPDATE ".$db->prefix."user
-			SET 
-				firstname='".$fname."',
-				lastname='".$lname."'
-			WHERE userid=".bkint($userid)."
-			LIMIT 1
-		";
-        $db->query_write($sql);
-    }
 }

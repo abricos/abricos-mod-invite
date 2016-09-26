@@ -19,6 +19,7 @@ class InviteApp extends AbricosApplication {
             'Owner' => 'InviteOwner',
             'Invite' => 'Invite',
             'UserSearch' => 'InviteUserSearch',
+            'Create' => 'InviteCreate',
         );
     }
 
@@ -53,28 +54,15 @@ class InviteApp extends AbricosApplication {
         return true;
     }
 
-    public function IsInvite(InviteOwner $owner){
-        if (!$this->IsWriteRole()){
-            return AbricosResponse::ERR_FORBIDDEN;
-        }
-
-        $ownerApp = Abricos::GetApp($owner->module);
-        if (empty($ownerApp)){
-            return AbricosResponse::ERR_BAD_REQUEST;
-        }
-
-        if (!$this->OwnerAppFunctionExist($owner->module, 'Invite_IsInvite')){
-            return AbricosResponse::ERR_BAD_REQUEST;
-        }
-
-        return $ownerApp->Invite_IsInvite($owner->type, $owner->ownerid);
-    }
-
     public function UserSearchToJSON($d){
         $res = $this->UserSearch($d);
         return $this->ResultToJSON('userSearch', $res);
     }
 
+    /**
+     * @param $d
+     * @return InviteUserSearch
+     */
     public function UserSearch($d){
         /** @var InviteUserSearch $ret */
         $ret = $this->InstanceClass('UserSearch', $d);
@@ -83,26 +71,37 @@ class InviteApp extends AbricosApplication {
             return $ret->SetError(AbricosResponse::ERR_FORBIDDEN);
         }
 
-        /** @var InviteOwner $owner */
-        $owner = $this->InstanceClass('Owner', $d->owner);
+        $owner = $ret->vars->owner;
+        if (!$this->OwnerAppFunctionExist($owner->module, 'Invite_IsUserSearch')){
+            return AbricosResponse::ERR_BAD_REQUEST;
+        }
 
-        if (!$this->IsInvite($owner)){
-            return $ret->SetError(AbricosResponse::ERR_FORBIDDEN);
+        $ownerApp = Abricos::GetApp($owner->module);
+        if (!$ownerApp->Invite_IsUserSearch($ret->vars)){
+            return $ret->SetError(AbricosResponse::ERR_BAD_REQUEST);
+        }
+
+        if (empty(Abricos::$user->firstname) || empty(Abricos::$user->lastname)){
+            return $ret->SetError(
+                AbricosResponse::ERR_BAD_REQUEST,
+                InviteUserSearch::CODE_MYNAME_IS_BAD
+            );
         }
 
         $loginOrEmail = $ret->vars->loginOrEmail;
 
-        $codes = $ret->codes;
-
         if (empty($loginOrEmail)){
-            return $ret->SetError(AbricosResponse::ERR_BAD_REQUEST, $codes->INPUT_IS_EMPTY);
+            return $ret->SetError(
+                AbricosResponse::ERR_BAD_REQUEST,
+                InviteUserSearch::CODE_INPUT_IS_EMPTY
+            );
         }
 
-        $ret->SetCode($codes->OK);
+        $ret->AddCode(InviteUserSearch::CODE_OK);
         $ret->userid = 0;
 
         if (UserManager::EmailValidate($loginOrEmail)){
-            $ret->AddCode($codes->EMAIL_VALID);
+            $ret->AddCode(InviteUserSearch::CODE_EMAIL_VALID);
 
             $ret->email = $loginOrEmail;
 
@@ -111,10 +110,10 @@ class InviteApp extends AbricosApplication {
             if (!empty($row)){
                 $ret->userid = intval($row['userid']);
             } else {
-                $ret->AddCode($codes->INVITE_ALLOWED);
+                $ret->AddCode(InviteUserSearch::CODE_INVITE_ALLOWED);
             }
         } else {
-            $ret->AddCode($codes->LOGIN_VALID);
+            $ret->AddCode(InviteUserSearch::CODE_LOGIN_VALID);
 
             $ret->login = $loginOrEmail;
 
@@ -125,202 +124,100 @@ class InviteApp extends AbricosApplication {
         }
 
         if ($ret->userid > 0){
-            $ret->AddCode($codes->EXISTS);
+            $ret->AddCode(InviteUserSearch::CODE_EXISTS);
 
             /** @var UProfileManager $uprofileManager */
             $uprofileManager = Abricos::GetModuleManager('uprofile');
 
             if (!$uprofileManager->UserPublicityCheck($ret->userid)){
-                $ret->AddCode($codes->ADD_DENIED);
+                $ret->AddCode(InviteUserSearch::CODE_ADD_DENIED);
             } else {
-                $ret->AddCode($codes->ADD_ALLOWED);
+                $ret->AddCode(InviteUserSearch::CODE_ADD_ALLOWED);
             }
         } else {
-            $ret->AddCode($codes->NOT_EXISTS);
+            $ret->AddCode(InviteUserSearch::CODE_NOT_EXISTS);
         }
 
         return $ret;
     }
 
-    public function UserByInvite($invite){
-        if (!$this->IsViewRole()){
-            return null;
+    public function Create(InviteUserSearch $rUS, $d){
+        /** @var InviteCreate $ret */
+        $ret = $this->InstanceClass('Create', $d);
+
+        if (!$rUS->IsSetCode(InviteUserSearch::CODE_INVITE_ALLOWED)){
+            return $ret->SetError(AbricosResponse::ERR_BAD_REQUEST);
         }
 
-        $user = InviteQuery::UserByInvite($this->db, $invite);
-        if (!empty($user)){
-            $author = InviteQuery::AuthorByInvite($this->db, $invite);
+        $vars = $ret->vars;
 
-            InviteModule::$instance->currentInvite = new InviteData($user, $author, $invite);
+        $firstName = ucfirst(strtolower($vars->firstName));
+        $lastName = ucfirst(strtolower($vars->lastName));
+
+        $latFirstName = ucfirst(translateruen($firstName));
+        $latLastName = ucfirst(translateruen($lastName));
+
+        $email = strtolower($rUS->email);
+
+        if (empty($firstName) || empty($lastName) || empty ($latFirstName) || empty($latLastName)){
+            return $ret->SetError(
+                AbricosResponse::ERR_BAD_REQUEST,
+                InviteCreate::CODE_USER_FULLNAME_EMPTY
+            );
         }
 
-        return $user;
-    }
+        $login = substr($latFirstName, 0, 1).$latLastName; // И+Фамилия
+        $info = InviteQuery::UserByLogin($this->db, $login);
 
-    public function AuthByInvite($userid, $invite){
-        if (!$this->IsViewRole()){
-            return false;
+        if (!empty($info)){ // следующий вариант Имя+Фамилия
+            $login = $latFirstName.$latLastName;
+            $info = InviteQuery::UserByLogin($this->db, $login);
         }
 
-        InviteQuery::InviteClean($this->db);
-
-        $row = InviteQuery::UserByInvite($this->db, $invite);
-        if (empty($row) || $row['id'] != $userid){
-            sleep(5);
-            return false;
+        if (!empty($info)){ // уже есть такой логин, может по мылу свободно?
+            $arr = explode("@", $email);
+            $login = $arr[0];
+            $info = InviteQuery::UserByLogin($this->db, $login);
         }
 
-        InviteQuery::InviteUse($this->db, $userid, $invite);
-
-        $userMan = Abricos::$user->GetManager();
-
-        $user = UserQuery::User($this->db, $row['id']);
-
-        $userMan->LoginMethod($user);
-
-        return true;
-    }
-
-
-    /**
-     * Зарегистрировать пользователя по приглашению
-     *
-     * Если пользователь виртуальный, то его можно будет пригласить позже.
-     * Виртаульный пользователь необходим для того, чтобы можно было работать с
-     * его учеткой как с реальным пользователем.
-     * Допустим, создается список сотрудников компании.
-     * Выяснять их существующие емайлы или регить новые - процесс длительный,
-     * а работать в системе уже нужно сейчас. Поэтому сначало создается виртуальный
-     * пользователь, а уже потом, если необходимо, он будет переводиться в статус реального
-     * с формированием пароля и отправкой приглашения.
-     *
-     * Коды ошибок:
-     *  1 - неверный емайл;
-     *  2 - не все поля заполнены;
-     *  3 - пользователь уже зарегистрирован с таким email;
-     *  4 - пользователь который приглашает не указал свое имя и фамилию;
-     *  99 - прочая ошибка
-     *
-     * @param string $modname
-     * @param string $email
-     * @param string $firstname
-     * @param string $lastname
-     * @param boolean $isVirtual True-виртуальный пользователь
-     */
-    public function UserRegister($modname, $email, $firstname, $lastname, $isVirtual = false){
-        if (!$this->IsWriteRole()){
-            return null;
-        }
-
-        if ($isVirtual){ // виртуальному пользователю емайл не нужен
-            $email = '';
-        }
-
-        $ret = new stdClass();
-        $ret->error = 0;
-
-        // приглашающий пользователь должен иметь имя и фамилию
-        // иначе как приглашенный пользователь поймет кто его пригласил?
-        if (empty($this->user->info['firstname']) || empty($this->user->info['lastname'])){
-            $ret->error = 4;
-            return $ret;
-        }
-
-        $manUser = Abricos::$user->GetManager();
-        if (!$isVirtual){
-            // приглашение реального пользователя
-            $email = strtolower($email);
-            if (!$manUser->EmailValidate($email)){
-                $ret->error = 1; // емайл указан не верно
-                return $ret;
-            }
-            $uinfo = InviteQuery::UserSearchInfo($this->db, $email);
-            if (!empty($uinfo)){
-                $ret->error = 3; // уже есть пользователь с таким емайл
-                return $ret;
-            }
-        }
-
-        $fnmLat = translateruen($firstname);
-        $fnmLat = strtoupper(substr($fnmLat, 0, 1)).substr($fnmLat, 1);
-
-        $lnmLat = translateruen($lastname);
-        $lnmLat = strtoupper(substr($lnmLat, 0, 1)).substr($lnmLat, 1);
-
-        if (empty($firstname) || empty($lastname) || empty($fnmLat) || empty($lnmLat)){
-            $ret->error = 2; // имя и фамилия пользователя неверны
-            return $ret;
-        }
-
-        // TODO: Использовать эту подборку для генерации логина
-
-        // подборка логина
-        $login = substr($fnmLat, 0, 1).$lnmLat; // И+Фамилия
-        $uinfo = UserQueryExt::UserByName($this->db, $login);
-
-        if (!empty($uinfo)){ // следующий вариант Имя+Фамилия
-            $login = $fnmLat.$lnmLat;
-            $uinfo = UserQueryExt::UserByName($this->db, $login);
-        }
-
-        if (!empty($uinfo)){ // следующий вариант Фамилия
-            $login = $lnmLat;
-            $uinfo = UserQueryExt::UserByName($this->db, $login);
-        }
-
-        if (!$isVirtual){
-            if (!empty($uinfo)){ // уже есть такой логин, может по мылу свободно?
-                $arr = explode("@", $email);
-                $login = $arr[0];
-                $uinfo = UserQueryExt::UserByName($this->db, $login);
-            }
-        }
-
-        if (!empty($uinfo)){ // следующий вариант  И+Фамилия+номерпользователя
+        if (!empty($info)){ // следующий вариант И+Фамилия+номерпользователя
             $cnt = InviteQuery::UserCount($this->db);
             for ($i = $cnt; $i < ($cnt + 300); $i++){
-                $login = substr($fnmLat, 0, 1).$lnmLat.$i;
-                $uinfo = UserQueryExt::UserByName($this->db, $login);
-                if (empty($uinfo)){
+                $login = substr($latFirstName, 0, 1).$latLastName.$i;
+                $info = InviteQuery::UserByLogin($this->db, $login);
+                if (empty($info)){
                     break;
                 }
             }
         }
 
-        if (!empty($uinfo)){ // здаюсь
-            $ret->error = 99;
-            return $ret;
+        if (!empty($info)){ // сдаюсь
+            return $ret->SetError(AbricosResponse::ERR_BAD_REQUEST);
         }
 
-        // логин подобрали, генерируем пароль
         $password = $this->PasswordGenerate();
-        $salt = $manUser->UserCreateSalt();
 
-        $user = array();
-        $user["username"] = $login;
-        $user["joindate"] = TIMENOW;
-        $user["salt"] = $salt;
-        $user["password"] = $manUser->UserPasswordCrypt($password, $salt);
-        $user["email"] = $email;
+        /** @var UserManager $userManager */
+        $userManager = Abricos::GetModuleManager('user');
 
-        // Добавление пользователя в базу
-        $userid = UserQueryExt::UserAppend($this->db, $user, User::UG_REGISTERED, '', false, $isVirtual);
-        InviteQuery::UserSetFLName($this->db, $userid, $firstname, $lastname);
+        $userManager->RolesDisable();
+        $userRegResult = $userManager->GetRegistrationManager()->Register($login, $password, $email, false, false);
+        $userManager->RolesEnable();
 
-        $pubkey = md5(TIMENOW.$login.$password);
-        $ret->user = array();
-        $ret->user['id'] = $userid;
-        $ret->user['login'] = $login;
-        $ret->user['password'] = $password;
-        $ret->user['pubkey'] = $pubkey;
-
-
-        $ret->URL = Abricos::$adress->host."/invite/".$pubkey."/".$userid."/".$modname."/?redirect=";
-
-        if (!$isVirtual){
-            // добавить инвайт в базу
-            InviteQuery::InviteAppend($this->db, $modname, $userid, $this->userid, $pubkey);
+        if (is_integer($userRegResult)){
+            return $ret->SetError(AbricosResponse::ERR_SERVER_ERROR);
         }
+
+        $ret->AddCode(InviteCreate::CODE_OK);
+
+        $ret->userid = $userRegResult->userid;
+        $ret->firstName = $firstName;
+        $ret->lastName = $lastName;
+        $ret->email = $email;
+        $ret->pubkey = md5(TIMENOW.$login.$password.$ret->userid);
+
+        InviteQuery::InviteAppend($this->db, $rUS, $ret);
+        InviteQuery::UserSetFullName($this->db, $ret);
 
         return $ret;
     }
@@ -394,4 +291,44 @@ class InviteApp extends AbricosApplication {
     }
 
 
+    /* * * * * * * * * * * OLD FUNCTIONS * * * * * * * * * */
+
+    public function UserByInvite($invite){
+        if (!$this->IsViewRole()){
+            return null;
+        }
+
+        $user = InviteQuery::UserByInvite($this->db, $invite);
+        if (!empty($user)){
+            $author = InviteQuery::AuthorByInvite($this->db, $invite);
+
+            InviteModule::$instance->currentInvite = new InviteData($user, $author, $invite);
+        }
+
+        return $user;
+    }
+
+    public function AuthByInvite($userid, $invite){
+        if (!$this->IsViewRole()){
+            return false;
+        }
+
+        InviteQuery::InviteClean($this->db);
+
+        $row = InviteQuery::UserByInvite($this->db, $invite);
+        if (empty($row) || $row['id'] != $userid){
+            sleep(5);
+            return false;
+        }
+
+        InviteQuery::InviteUse($this->db, $userid, $invite);
+
+        $userMan = Abricos::$user->GetManager();
+
+        $user = UserQuery::User($this->db, $row['id']);
+
+        $userMan->LoginMethod($user);
+
+        return true;
+    }
 }

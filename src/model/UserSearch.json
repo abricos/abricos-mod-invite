@@ -5,28 +5,23 @@
     "loginOrEmail": {
       "type": "string",
       "parse": "full"
+    },
+    "owner": {
+      "type": "model:Owner"
     }
   },
   "codes": {
     "OK": 1,
-    "INPUT_IS_EMPTY": {
-      "code": 2,
-      "msg": "Search query is empty"
-    },
-    "EMAIL_VALID": 4,
-    "LOGIN_VALID": 8,
-    "EXISTS": {
-      "code": 16,
-      "msg": "The user exists"
-    },
-    "ADD_ALLOWED": 32,
-    "ADD_DENIED": 64,
-    "NOT_EXISTS": {
-      "code": 128,
-      "msg": "User is not found"
-    },
-    "INVITE_ALLOWED": 256,
-    "INVITE_DENIED": 512
+    "MYNAME_IS_BAD": 2,
+    "INPUT_IS_EMPTY": 4,
+    "EMAIL_VALID": 8,
+    "LOGIN_VALID": 16,
+    "EXISTS": 32,
+    "ADD_ALLOWED": 64,
+    "ADD_DENIED": 128,
+    "NOT_EXISTS": 256,
+    "INVITE_ALLOWED": 512,
+    "INVITE_DENIED": 1024
   },
   "fields": {
     "userid": {
