@@ -58,6 +58,8 @@ interface InviteCreateVars {
  * @property InviteCreateVars $vars
  * @property int $userid
  * @property string $email
+ * @property string $login
+ * @property string $password
  * @property string $firstName
  * @property string $lastName
  * @property string $pubkey

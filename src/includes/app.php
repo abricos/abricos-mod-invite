@@ -214,6 +214,8 @@ class InviteApp extends AbricosApplication {
         $ret->firstName = $firstName;
         $ret->lastName = $lastName;
         $ret->email = $email;
+        $ret->login = $login;
+        $ret->password = $password;
         $ret->pubkey = md5(TIMENOW.$login.$password.$ret->userid);
 
         InviteQuery::InviteAppend($this->db, $rUS, $ret);

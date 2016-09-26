@@ -21,6 +21,13 @@
     "email": {
       "type": "string"
     },
+    "login": {
+      "type": "string"
+    },
+    "password": {
+      "type": "string",
+      "rolefn": "IsAdminRole"
+    },
     "firstName": {
       "type": "string"
     },
