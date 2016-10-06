@@ -37,7 +37,7 @@ Component.entryPoint = function(NS){
                         result: rUS
                     };
 
-                if (err || !rUS.isSetCode('OK')){
+                if (err && !rUS){
                 } else {
                     var codes = rUS.getCodesIsSet();
                     this.triggerShow('inviteForm', codes);
