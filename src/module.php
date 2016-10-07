@@ -18,10 +18,6 @@ class InviteModule extends Ab_Module {
         $this->takelink = "invite";
         $this->permission = new InvitePermission($this);
     }
-
-    public function GetContentName(){
-        return 'auth';
-    }
 }
 
 class InviteAction {
